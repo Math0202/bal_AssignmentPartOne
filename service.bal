@@ -9,6 +9,7 @@ type Programme record {|
   string department;
   string programmeTitle;
   time:Date registrationDate;
+  int registrationYear;
   int programmeLength;
   course[] course;
 |};
@@ -20,12 +21,7 @@ readonly string courseCode;
 |};
 
 //create tables to act as the database
-table<Programme> key(programmeCode) programmesTable = table[];
-table<course> key(courseCode) coursesTable = table[];
-
-service /programmes on new http:Listener(9090) {
-    resource function get programmes() returns Programme[]|error {
-      Programme hr = {
+table<Programme> key(programmeCode) programmesTable = table[ {
         programmeCode: "HR612", 
         nqfLevel: 7, 
         faculty: "Human Management",
@@ -33,11 +29,27 @@ service /programmes on new http:Listener(9090) {
         programmeTitle: "HR",
         registrationDate: {year: 2024, month: 6, day: 3},
         programmeLength: 5,
-        course: []};
+        course: [],
+        registrationYear: 0
+        }
+];
+table<course> key(courseCode) coursesTable = table[];
+
+service /programmes on new http:Listener(9090) {
+
+  //test resource function
+    resource function get programmes() returns Programme[]|error {
+      Programme hr = {
+        programmeCode: "HR8612", 
+        nqfLevel: 7, 
+        faculty: "Human Management",
+        department: "Social Study",
+        programmeTitle: "HR",
+        registrationDate: {year: 2024, month: 6, day: 3},
+        programmeLength: 5,
+        course: [],
+        registrationYear: 0};
         return [hr];
-    }
-    
-    resource function set .() returns error? {
     }
 
     //add a programme to the database(table)
@@ -65,5 +77,54 @@ service /programmes on new http:Listener(9090) {
       }else {
         return "Programme "+ updateProgramme.programmeCode + " successfuly updated!"; 
       }
+    }
+
+    //retrive details of a specific programme by code
+    resource  function get getDetailsOfProgrammeByCode/[string currentProgrammeCode]() returns Programme|error {
+      Programme? programme = programmesTable.get(currentProgrammeCode);
+
+      if(programme is Programme){
+        return programme;
+      }else {
+        return error("Programme with code " + currentProgrammeCode + " not found.");
+      }
+    }
+
+    //delete a programme by code 
+    resource function delete deleteProgramme(string programmeCode) returns string {
+        Programme deletedProgramme = programmesTable.remove(programmeCode);
+        string errorMessage = "Error deleting programme: $" + programmeCode;
+
+        if (deletedProgramme.length() == 0 ) {
+            return errorMessage;
+        } else {
+            return "Programme with code " + programmeCode + " deleted successfully.";
+        }
+    }
+
+        // Retrieve all programmes due that are due
+    resource function get programmesDueForReview() returns Programme[] {
+        int currentYear = 2024;
+        Programme[] dueProgrammes = [];
+
+        foreach var programme in programmesTable {
+            int registrationYear = programme.registrationYear;
+            if ((currentYear - registrationYear) >= 5) {
+                dueProgrammes.push(programme);
+            }
+        }
+        
+        return dueProgrammes;
+    }
+
+    // Retrieve all programmes by faculty
+    resource function get programmesByFaculty(string faculty) returns Programme[] {
+        Programme[] programmesInFaculty = [];
+        foreach var programme in programmesTable {
+            if (programme.faculty == faculty) {
+                programmesInFaculty.push(programme);
+            }
+        }
+        return programmesInFaculty;
     }
 }
