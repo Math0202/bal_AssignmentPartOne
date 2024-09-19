@@ -81,6 +81,13 @@ service /programmes on new http:Listener(9090) {
 
     //retrive details of a specific programme by code
     resource  function get getDetailsOfProgrammeByCode/[string currentProgrammeCode]() returns Programme|error {
+        
+        //incase we want to acces this resources from another application here is how we can grant permission
+        http:Response res = new;
+        res.setHeader("Access-Control-Allow-Origin", "http://localhost:51118");
+        res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
       Programme? programme = programmesTable.get(currentProgrammeCode);
 
       if(programme is Programme){
@@ -128,3 +135,4 @@ service /programmes on new http:Listener(9090) {
         return programmesInFaculty;
     }
 }
+        
