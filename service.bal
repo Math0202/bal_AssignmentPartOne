@@ -69,7 +69,7 @@ service /programmes on new http:Listener(9090) {
     }
 
     //update a specific programme by id
-    resource function put updateProgrammeByCode( Programme updateProgramme) returns  string {
+    resource function put updateProgrammeByCode( Programme updateProgramme) returns  string{
       error? updateResults = programmesTable.put(updateProgramme);
 
       if(updateResults is error){
@@ -100,13 +100,13 @@ service /programmes on new http:Listener(9090) {
     //delete a programme by code 
     resource function delete deleteProgramme(string programmeCode) returns string {
         Programme deletedProgramme = programmesTable.remove(programmeCode);
-        string errorMessage = "Error deleting programme: $" + programmeCode;
+        string errorMessage = "Programme with code " + programmeCode + " deleted successfully.";
+         deletedProgramme = programmesTable.get(programmeCode);
 
-        if (deletedProgramme.length() == 0 ) {
-            return errorMessage;
-        } else {
-            return "Programme with code " + programmeCode + " deleted successfully.";
-        }
+        if (deletedProgramme is Programme ) {
+             errorMessage = "Error deleting programme: $" + programmeCode;
+        } 
+        return errorMessage;
     }
 
         // Retrieve all programmes due that are due
